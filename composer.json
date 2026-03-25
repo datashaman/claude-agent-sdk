@@ -3,6 +3,7 @@
     "description": "PHP SDK for building autonomous agents powered by Claude",
     "type": "library",
     "license": "MIT",
+    "keywords": ["claude", "anthropic", "agent", "sdk", "ai", "llm", "mcp", "streaming"],
     "authors": [
         {
             "name": "DataShaman",
