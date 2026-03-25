@@ -1,0 +1,33 @@
+{
+    "name": "datashaman/claude-agent-sdk",
+    "description": "PHP SDK for building autonomous agents powered by Claude",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "DataShaman",
+            "email": "marlin@datashaman.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "DataShaman\\Claude\\AgentSdk\\": "src/"
+        },
+        "files": [
+            "src/Mcp/functions.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DataShaman\\Claude\\AgentSdk\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
