@@ -16,7 +16,7 @@ final class ArgumentBuilderTest extends TestCase
         $options = ClaudeAgentOptions::create();
         $args = ArgumentBuilder::build($options);
 
-        $this->assertSame(['-p', '--output-format', 'stream-json'], $args);
+        $this->assertSame(['-p', '--output-format', 'stream-json', '--verbose'], $args);
     }
 
     public function testModelArg(): void
