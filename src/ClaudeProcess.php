@@ -36,19 +36,15 @@ final class ClaudeProcess
         $command = $this->buildCommand();
         $this->spawn($command);
 
+        // Close stdin immediately to avoid "no stdin data" warning
+        if (isset($this->pipes[0]) && is_resource($this->pipes[0])) {
+            fclose($this->pipes[0]);
+            unset($this->pipes[0]);
+        }
+
         $stdout = $this->pipes[1];
-        stream_set_blocking($stdout, false);
 
-        while (true) {
-            $line = fgets($stdout);
-
-            if ($line === false) {
-                if (feof($stdout)) {
-                    break;
-                }
-                usleep(1000);
-                continue;
-            }
+        while (($line = fgets($stdout)) !== false) {
 
             $line = trim($line);
             if ($line === '') {

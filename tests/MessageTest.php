@@ -9,78 +9,89 @@ use PHPUnit\Framework\TestCase;
 
 final class MessageTest extends TestCase
 {
-    public function testFromStreamEventWithNestedEvent(): void
+    public function testFromStreamEventAssistantMessage(): void
     {
         $data = [
-            'uuid' => 'test-uuid',
-            'session_id' => 'session-123',
-            'parent_tool_use_id' => null,
-            'event' => [
-                'type' => 'content_block_delta',
-                'index' => 0,
-                'delta' => ['type' => 'text_delta', 'text' => 'Hello'],
+            'type' => 'assistant',
+            'message' => [
+                'role' => 'assistant',
+                'content' => [['type' => 'text', 'text' => 'Hello!']],
             ],
+            'session_id' => 'session-123',
+            'uuid' => 'test-uuid',
+            'parent_tool_use_id' => null,
         ];
 
         $message = Message::fromStreamEvent($data);
 
-        $this->assertSame('content_block_delta', $message->type);
-        $this->assertSame(0, $message->index);
-        $this->assertSame(['type' => 'text_delta', 'text' => 'Hello'], $message->delta);
+        $this->assertSame('assistant', $message->type);
+        $this->assertNull($message->subtype);
         $this->assertSame('session-123', $message->sessionId);
         $this->assertSame('test-uuid', $message->uuid);
         $this->assertNull($message->parentToolUseId);
-        $this->assertNull($message->message);
-        $this->assertNull($message->contentBlock);
+        $this->assertSame('Hello!', $message->getTextContent());
     }
 
-    public function testFromStreamEventMessageStart(): void
+    public function testFromStreamEventSystemMessage(): void
     {
         $data = [
-            'uuid' => 'uuid-1',
+            'type' => 'system',
+            'subtype' => 'init',
             'session_id' => 'sess-1',
-            'event' => [
-                'type' => 'message_start',
-                'index' => 0,
-                'message' => ['role' => 'assistant', 'content' => []],
-            ],
+            'uuid' => 'uuid-1',
         ];
 
         $message = Message::fromStreamEvent($data);
 
-        $this->assertSame('message_start', $message->type);
-        $this->assertSame(['role' => 'assistant', 'content' => []], $message->message);
+        $this->assertSame('system', $message->type);
+        $this->assertSame('init', $message->subtype);
     }
 
-    public function testFromStreamEventContentBlockStart(): void
+    public function testFromStreamEventResultMessage(): void
     {
         $data = [
-            'uuid' => 'uuid-2',
+            'type' => 'result',
+            'subtype' => 'success',
+            'result' => 'Hello world!',
+            'total_cost_usd' => 0.05,
+            'duration_ms' => 1234,
             'session_id' => 'sess-2',
-            'event' => [
-                'type' => 'content_block_start',
-                'index' => 0,
-                'content_block' => ['type' => 'text'],
-            ],
+            'uuid' => 'uuid-2',
         ];
 
         $message = Message::fromStreamEvent($data);
 
-        $this->assertSame('content_block_start', $message->type);
-        $this->assertSame(['type' => 'text'], $message->contentBlock);
+        $this->assertSame('result', $message->type);
+        $this->assertSame('success', $message->subtype);
+        $this->assertSame('Hello world!', $message->result);
+        $this->assertSame(0.05, $message->costUsd);
+        $this->assertSame(1234, $message->durationMs);
+        $this->assertSame('Hello world!', $message->getTextContent());
+    }
+
+    public function testGetTextContentReturnsNullForSystemMessages(): void
+    {
+        $data = [
+            'type' => 'system',
+            'subtype' => 'init',
+            'uuid' => 'uuid-3',
+            'session_id' => 'sess-3',
+        ];
+
+        $message = Message::fromStreamEvent($data);
+        $this->assertNull($message->getTextContent());
     }
 
     public function testFromStreamEventWithMissingFields(): void
     {
-        $data = [
-            'event' => ['type' => 'message_stop'],
-        ];
+        $data = ['type' => 'system'];
 
         $message = Message::fromStreamEvent($data);
 
-        $this->assertSame('message_stop', $message->type);
+        $this->assertSame('system', $message->type);
         $this->assertSame('', $message->sessionId);
         $this->assertSame('', $message->uuid);
-        $this->assertNull($message->index);
+        $this->assertNull($message->result);
+        $this->assertNull($message->costUsd);
     }
 }

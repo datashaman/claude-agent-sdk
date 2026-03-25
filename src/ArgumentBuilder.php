@@ -12,6 +12,7 @@ final class ArgumentBuilder
         $args = [
             '-p',
             '--output-format', 'stream-json',
+            '--verbose',
         ];
 
         if ($options->model !== null) {
