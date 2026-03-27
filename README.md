@@ -7,6 +7,23 @@ PHP SDK for building autonomous agents powered by Claude. This is the PHP equiva
 - PHP 8.2+
 - [Claude CLI](https://docs.anthropic.com/en/docs/claude-code/overview) installed and authenticated
 
+### Web Server Authentication (PHP-FPM)
+
+When running under a web server (PHP-FPM with Nginx/Valet/etc.), the Claude CLI cannot access the macOS login keychain used by `claude login`. You must set up a file-based authentication token:
+
+```bash
+claude setup-token
+```
+
+This creates a long-lived token tied to your Claude subscription that works without keychain access. Add the token to your `.env`:
+
+```env
+CLAUDE_CLI_PATH=/path/to/claude
+CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-...
+```
+
+The SDK automatically passes `CLAUDE_*` and `ANTHROPIC_*` environment variables to the CLI process.
+
 ## Installation
 
 ```bash
