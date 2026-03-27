@@ -15,6 +15,10 @@ final class ArgumentBuilder
             '--verbose',
         ];
 
+        if ($options->bare) {
+            $args[] = '--bare';
+        }
+
         if ($options->model !== null) {
             $args[] = '--model';
             $args[] = $options->model;
