@@ -150,10 +150,15 @@ final class ClaudeProcess
             'LANG' => getenv('LANG') ?: 'en_US.UTF-8',
         ];
 
-        // Pass through CLAUDE_* and ANTHROPIC_* env vars
+        // Pass through CLAUDE_* and ANTHROPIC_* env vars, excluding keys
+        // that would change the CLI's auth mode (e.g. ANTHROPIC_API_KEY)
+        $excluded = array_flip($this->options->excludeEnvKeys);
         $parentEnv = getenv();
         if (is_array($parentEnv)) {
             foreach ($parentEnv as $key => $value) {
+                if (isset($excluded[$key])) {
+                    continue;
+                }
                 if (str_starts_with($key, 'CLAUDE_') || str_starts_with($key, 'ANTHROPIC_')) {
                     $env[$key] = $value;
                 }

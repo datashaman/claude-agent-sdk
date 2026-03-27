@@ -8,6 +8,18 @@ use DataShaman\Claude\AgentSdk\Enum\PermissionMode;
 
 final class ClaudeAgentOptions
 {
+    /**
+     * Environment variable keys that are excluded from passthrough by default.
+     *
+     * ANTHROPIC_API_KEY triggers direct API access (pay-per-use) instead of
+     * subscription-based authentication via Claude Code. Since this SDK drives
+     * the Claude CLI, which uses subscription auth, passing this key would
+     * bypass the subscription and incur unexpected API charges.
+     */
+    public const DEFAULT_EXCLUDED_ENV_KEYS = [
+        'ANTHROPIC_API_KEY',
+    ];
+
     private function __construct(
         public readonly ?string $model = null,
         public readonly ?int $maxTurns = null,
@@ -23,6 +35,8 @@ final class ClaudeAgentOptions
         public readonly ?array $extendedThinking = null,
         /** @var callable|null */
         public readonly mixed $permissionPromptHandler = null,
+        /** @var list<string> Environment variable keys to exclude from passthrough */
+        public readonly array $excludeEnvKeys = self::DEFAULT_EXCLUDED_ENV_KEYS,
     ) {}
 
     public static function create(): self
@@ -105,5 +119,15 @@ final class ClaudeAgentOptions
     public function permissionPromptHandler(callable $permissionPromptHandler): self
     {
         return $this->with('permissionPromptHandler', $permissionPromptHandler);
+    }
+
+    /**
+     * Set environment variable keys to exclude from passthrough to the CLI.
+     *
+     * @param list<string> $excludeEnvKeys
+     */
+    public function excludeEnvKeys(array $excludeEnvKeys): self
+    {
+        return $this->with('excludeEnvKeys', $excludeEnvKeys);
     }
 }

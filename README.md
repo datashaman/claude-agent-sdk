@@ -15,14 +15,37 @@ When running under a web server (PHP-FPM with Nginx/Valet/etc.), the Claude CLI 
 claude setup-token
 ```
 
-This creates a long-lived token tied to your Claude subscription that works without keychain access. Add the token to your `.env`:
+This creates a long-lived token tied to your **Claude Code subscription** that works without keychain access. Add the token to your `.env`:
 
 ```env
 CLAUDE_CLI_PATH=/path/to/claude
 CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-...
 ```
 
-The SDK automatically passes `CLAUDE_*` and `ANTHROPIC_*` environment variables to the CLI process.
+The SDK automatically passes `CLAUDE_*` and `ANTHROPIC_*` environment variables to the CLI process, with one important exception:
+
+### Environment Variable Exclusions
+
+`ANTHROPIC_API_KEY` is **excluded by default**. When present, it causes the CLI to use direct API access (pay-per-use) instead of your Claude Code subscription. Since this SDK is designed to drive the Claude CLI with subscription-based auth, passing the API key would bypass your subscription and incur unexpected charges.
+
+Default exclusions are defined in `ClaudeAgentOptions::DEFAULT_EXCLUDED_ENV_KEYS`.
+
+To override the exclusion list (e.g. if you explicitly want API key auth):
+
+```php
+$options = ClaudeAgentOptions::create()
+    ->excludeEnvKeys([]); // pass all env vars through
+```
+
+To add additional exclusions:
+
+```php
+$options = ClaudeAgentOptions::create()
+    ->excludeEnvKeys([
+        ...ClaudeAgentOptions::DEFAULT_EXCLUDED_ENV_KEYS,
+        'ANTHROPIC_CUSTOM_VAR',
+    ]);
+```
 
 ## Installation
 
@@ -165,7 +188,8 @@ Immutable configuration object with fluent builder:
 | `permissionMode(PermissionMode)` | Permission mode |
 | `allowedTools(array)` | Restrict available tools |
 | `cwd(string)` | Working directory for CLI |
-| `env(array)` | Environment variables |
+| `env(array)` | Environment variables (full override) |
+| `excludeEnvKeys(array)` | Env keys to exclude from passthrough (default: `ANTHROPIC_API_KEY`) |
 | `sessionId(string)` | Resume a session |
 | `extendedThinking(array)` | Extended thinking config |
 | `permissionPromptHandler(callable)` | Permission callback |
