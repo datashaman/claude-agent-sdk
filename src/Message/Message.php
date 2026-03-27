@@ -47,10 +47,6 @@ final readonly class Message
             return $parts ? implode('', $parts) : null;
         }
 
-        if ($this->type === 'result') {
-            return $this->result;
-        }
-
         return null;
     }
 }
