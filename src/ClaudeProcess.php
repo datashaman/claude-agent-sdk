@@ -108,17 +108,59 @@ final class ClaudeProcess
             2 => ['pipe', 'w'], // stderr
         ];
 
+        $env = $this->buildEnvironment();
+
         $this->process = proc_open(
             $command,
             $descriptors,
             $this->pipes,
             $this->options->cwd,
-            $this->options->env ?: null,
+            $env,
         );
 
         if (!is_resource($this->process)) {
             throw new ClaudeProcessException(-1, 'Failed to start Claude CLI process');
         }
+    }
+
+    /**
+     * Build a clean environment for the CLI process.
+     *
+     * When running under web servers (PHP-FPM/Nginx), the parent process
+     * environment is either stripped bare (missing PATH, USER) or polluted
+     * with HTTP_*, SERVER_*, and other request variables that can interfere
+     * with the CLI. This method builds a minimal, clean environment with
+     * only what the CLI needs to function and authenticate.
+     *
+     * @return array<string, string>|null
+     */
+    private function buildEnvironment(): ?array
+    {
+        if ($this->options->env) {
+            return $this->options->env;
+        }
+
+        $home = getenv('HOME') ?: ('/home/' . (getenv('USER') ?: get_current_user()));
+        $user = getenv('USER') ?: get_current_user();
+
+        $env = [
+            'HOME' => $home,
+            'USER' => $user,
+            'PATH' => getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin',
+            'LANG' => getenv('LANG') ?: 'en_US.UTF-8',
+        ];
+
+        // Pass through CLAUDE_* and ANTHROPIC_* env vars
+        $parentEnv = getenv();
+        if (is_array($parentEnv)) {
+            foreach ($parentEnv as $key => $value) {
+                if (str_starts_with($key, 'CLAUDE_') || str_starts_with($key, 'ANTHROPIC_')) {
+                    $env[$key] = $value;
+                }
+            }
+        }
+
+        return $env;
     }
 
     /** @return list<string> */
@@ -140,6 +182,12 @@ final class ClaudeProcess
         foreach ($paths as $path) {
             if ($path === null) {
                 continue;
+            }
+
+            // For absolute paths, check directly without relying on `which`,
+            // which may fail under web servers with a stripped PATH.
+            if (str_starts_with($path, '/') && is_executable($path)) {
+                return $path;
             }
 
             $result = shell_exec("which {$path} 2>/dev/null");
