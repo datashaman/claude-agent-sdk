@@ -37,6 +37,7 @@ final class ClaudeAgentOptions
         public readonly mixed $permissionPromptHandler = null,
         /** @var list<string> Environment variable keys to exclude from passthrough */
         public readonly array $excludeEnvKeys = self::DEFAULT_EXCLUDED_ENV_KEYS,
+        public readonly bool $bare = false,
     ) {}
 
     public static function create(): self
@@ -129,5 +130,14 @@ final class ClaudeAgentOptions
     public function excludeEnvKeys(array $excludeEnvKeys): self
     {
         return $this->with('excludeEnvKeys', $excludeEnvKeys);
+    }
+
+    /**
+     * Enable bare mode: skip hooks, LSP, plugins, auto-memory, keychain reads,
+     * and CLAUDE.md auto-discovery. Ideal for headless/containerized environments.
+     */
+    public function bare(bool $bare = true): self
+    {
+        return $this->with('bare', $bare);
     }
 }
